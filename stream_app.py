@@ -4,7 +4,7 @@ import random
 
 # รูปภาพที่ใช้ในเกม
 images = [
-    'image1.jpg', 'image2.jpg', 'image3.jpg'
+    'IMG_7403.jpeg', 'image2.jpg', 'image3.jpg'
 ]
 
 # เริ่มต้นเกม
