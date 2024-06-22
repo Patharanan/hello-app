@@ -19,7 +19,7 @@ def play_matching_game():
 
     # แสดงรูปภาพในแต่ละคอลัมน์
     if col1.button('Day 1'):
-        st.image(Image.open( 'image1.jpg'), use_column_width=True)
+        st.image(Image.open( 'IMG_7403.jpeg'), use_column_width=True)
     if col2.button('Day 2'):
         st.image(Image.open( 'image2.jpg'), use_column_width=True)
     if col3.button('Day 3'):
