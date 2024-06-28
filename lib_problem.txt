@@ -1,0 +1,13 @@
+pip show seaborn scipy numpy
+
+
+pip install --upgrade seaborn scipy numpy
+
+
+python -m venv newenv
+source newenv/bin/activate  # สำหรับ Linux/Mac
+newenv\Scripts\activate     # สำหรับ Windows
+
+pip install streamlit seaborn scipy numpy pandas
+
+streamlit run .\Home_page.py
