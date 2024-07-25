@@ -7,10 +7,9 @@ import random
 import os
 from io import BytesIO
 
-st.set_page_config(page_title='Easy Analysis Time Element', page_icon='img.png')
+st.set_page_config(page_title='Simple Time Element Analysis', page_icon='img.png')
 
-
-# convert file log to csv write 7 column 
+# Convert log file to csv with 7 columns
 def convert_log_to_csv(input_file):
     output_file = input_file.replace('.log', '.csv')
     with open(input_file, 'r') as log_file:
@@ -26,9 +25,8 @@ def convert_log_to_csv(input_file):
 
     return output_file
 
-
-# analyze file from upload  custom message custom log level fix y limit
-def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_values):
+# Analyze and plot data
+def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_values, file_names, start_time=None, end_time=None):
     filtered_dfs = []
     combined_df = pd.DataFrame()
 
@@ -37,22 +35,26 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
             filtered_df = df[df['Message'].isin(selected_messages) & (df['Timediff(ms)'] <= y_limit)]
         else:
             filtered_df = df[(df['LogLevel'] == log_level) & df['Message'].isin(selected_messages) & (df['Timediff(ms)'] <= y_limit)]
+
+        if start_time and end_time:
+            start_str = start_time.strftime('%H:%M:%S') if start_time else None
+            end_str = end_time.strftime('%H:%M:%S') if end_time else None
+            filtered_df = filtered_df[(filtered_df['Time'] >= start_str) & (filtered_df['Time'] <= end_str)]
+
+        filtered_df['File'] = file_names[idx]
         filtered_dfs.append(filtered_df)
         combined_df = pd.concat([combined_df, filtered_df], ignore_index=True)
 
     st.subheader('Analysis Plots')
-
     num_files = len(dataframes)
     file_colors = {idx: (random.random(), random.random(), random.random()) for idx in range(num_files)}
 
     for idx, df in enumerate(filtered_dfs):
-        file_name = f"File {idx + 1}"  # เลือกใช้ชื่อของไฟล์ที่อัปโหลด
-
+        file_name = file_names[idx]
         st.subheader(f'{file_name}')
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 10))  # ปรับขนาดของ subplot เป็น (15, 10)
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 10))
 
-        # Bar Plot
         sns.barplot(x='Timediff(ms)', y='Message', data=df, ax=ax1, color=file_colors[idx])
         for msg in df['Message'].unique():
             max_val_bar = df[df['Message'] == msg]['Timediff(ms)'].max()
@@ -60,6 +62,9 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
             ax1.annotate(f'{msg} Max: {max_val_bar}', xy=(x_pos, msg), xytext=(5, 5),
                          textcoords='offset points', fontsize=10, ha='left', va='center', color='black', 
                          bbox=dict(facecolor='white', alpha=0.8))
+
+            if msg in target_values and max_val_bar > target_values[msg]:
+                st.warning(f'Warning: {msg} in file {file_name} exceeds target value! Max: {max_val_bar}, Target: {target_values[msg]}')
         for msg, target in target_values.items():
             if msg in df['Message'].unique():
                 ax1.scatter(target, msg, color='red', marker='o', s=100, label='Target Value')
@@ -68,7 +73,6 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
         ax1.set_ylabel('Message')
         ax1.legend()
 
-        # Violin Plot
         sns.violinplot(x='Timediff(ms)', y='Message', data=df, ax=ax2, color=file_colors[idx])
         for msg in df['Message'].unique():
             max_val_violin = df[df['Message'] == msg]['Timediff(ms)'].max()
@@ -83,24 +87,20 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
         ax2.set_xlabel('Time Difference (ms)')
         ax2.set_ylabel('Message')
         ax2.legend()
-
-        plt.subplots_adjust(wspace=0.5)  # ปรับระยะห่างระหว่าง subplot
-
+        plt.subplots_adjust(wspace=2)
         plt.xticks(rotation=45)
         st.pyplot(fig)
 
-    # Combined Plot
     st.subheader('Combined Analysis Plot')
-    combined_fig, (ax1_comb, ax2_comb) = plt.subplots(1, 2, figsize=(15, 10))  # ปรับขนาดของ subplot เป็น (15, 10)
+    combined_fig, (ax1_comb, ax2_comb) = plt.subplots(1, 2, figsize=(20, 15))
 
-    # Bar Plot for combined data
-    sns.barplot(x='Timediff(ms)', y='Message', data=combined_df, ax=ax1_comb)
+    sns.barplot(x='Timediff(ms)', y='Message', data=combined_df, hue='File', ax=ax1_comb)
     for msg in combined_df['Message'].unique():
         max_val_bar_comb = combined_df[combined_df['Message'] == msg]['Timediff(ms)'].max()
         x_pos_comb = combined_df[combined_df['Message'] == msg]['Timediff(ms)'].median()
-        ax1_comb.annotate(f'{msg} Max: {max_val_bar_comb}', xy=(x_pos_comb, msg), xytext=(5, 5),
-                     textcoords='offset points', fontsize=10, ha='left', va='center', color='black', 
-                     bbox=dict(facecolor='white', alpha=0.8))
+        ax1_comb.annotate(f'{msg} Max: {max_val_bar_comb}', xy=(x_pos_comb, msg), xytext=(20, 5),
+                          textcoords='offset points', fontsize=10, ha='left', va='center', color='black', 
+                          bbox=dict(facecolor='white', alpha=0.8))
     for msg, target in target_values.items():
         if msg in combined_df['Message'].unique():
             ax1_comb.scatter(target, msg, color='red', marker='o', s=100, label='Target Value')
@@ -109,14 +109,13 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
     ax1_comb.set_ylabel('Message')
     ax1_comb.legend()
 
-    # Violin Plot for combined data
-    sns.violinplot(x='Timediff(ms)', y='Message', data=combined_df, ax=ax2_comb)
+    sns.violinplot(x='Timediff(ms)', y='Message', data=combined_df, hue='File', ax=ax2_comb)
     for msg in combined_df['Message'].unique():
         max_val_violin_comb = combined_df[combined_df['Message'] == msg]['Timediff(ms)'].max()
         x_pos_comb = combined_df[combined_df['Message'] == msg]['Timediff(ms)'].median()
-        ax2_comb.annotate(f'{msg} Max: {max_val_violin_comb}', xy=(x_pos_comb, msg), xytext=(5, 5),
-                     textcoords='offset points', fontsize=10, ha='left', va='center', color='black',
-                     bbox=dict(facecolor='white', alpha=0.8))
+        ax2_comb.annotate(f'{msg} Max: {max_val_violin_comb}', xy=(x_pos_comb, msg), xytext=(20, 5),
+                          textcoords='offset points', fontsize=10, ha='left', va='center', color='black',
+                          bbox=dict(facecolor='white', alpha=0.8))
     for msg, target in target_values.items():
         if msg in combined_df['Message'].unique():
             ax2_comb.scatter(target, msg, color='red', marker='o', s=100, label='Target Value')
@@ -125,8 +124,7 @@ def analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_v
     ax2_comb.set_ylabel('Message')
     ax2_comb.legend()
 
-    plt.subplots_adjust(wspace=2)  # ปรับระยะห่างระหว่าง subplot
-
+    plt.subplots_adjust(wspace=2)
     plt.xticks(rotation=45)
     st.pyplot(combined_fig)
 
@@ -139,34 +137,42 @@ def fig_to_bytes(fig):
     return img_bytes
 
 def main():
-    st.title("Analysis 📊")
-    uploaded_files = st.file_uploader('Upload multiple log files', type='log', accept_multiple_files=True)
+    st.title("Common Analysis 📊")
+    uploaded_files = st.file_uploader('Upload multiple LOG files', type='log', accept_multiple_files=True)
 
     dataframes = []
     log_levels = []
     selected_messages = []
     y_limit = 10000
     target_values = {}
+    file_names = []
+    start_time = None
+    end_time = None
+    
+    if 'history' not in st.session_state:
+        st.session_state.history = []
 
     if uploaded_files:
         for idx, uploaded_file in enumerate(uploaded_files):
             file_key = f"file_uploader_{idx}_{uploaded_file.name}"
-            st.text(uploaded_file.name)
+            file_name = uploaded_file.name
+            file_names.append(file_name)
+            st.text(file_name)
 
-            with open(uploaded_file.name, 'wb') as f:
+            with open(file_name, 'wb') as f:
                 f.write(uploaded_file.getvalue())
 
-            csv_file = convert_log_to_csv(uploaded_file.name)
+            csv_file = convert_log_to_csv(file_name)
             df = pd.read_csv(csv_file)
             dataframes.append(df)
-            os.remove(uploaded_file.name)
+            os.remove(file_name)
 
-        # Store the dataframes in session state
         st.session_state['dataframes'] = dataframes
+        st.session_state['file_names'] = file_names
 
         log_levels = pd.concat([df['LogLevel'] for df in dataframes]).unique().tolist()
         log_levels.insert(0, 'All')
-
+        st.sidebar.subheader('Filters')
         log_level = st.sidebar.selectbox('Log Level', log_levels)
 
         if log_level == 'All':
@@ -174,21 +180,28 @@ def main():
         else:
             messages = pd.concat([df[df['LogLevel'] == log_level]['Message'] for df in dataframes]).unique().tolist()
 
-        st.sidebar.subheader('Filters')
         selected_messages = st.sidebar.multiselect('Message filter', messages, default=messages)
         y_limit = st.sidebar.slider('Time Difference Limit (ms)', min_value=0, max_value=20000, value=10000)
+        start_time = st.sidebar.time_input('Start Time')
+        end_time = st.sidebar.time_input('End Time')
 
         for msg in selected_messages:
             target_values[msg] = st.sidebar.number_input(f'Target value for {msg}', min_value=0.0, step=0.01)
 
-        combined_fig = analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_values)
+        combined_fig = analyze_and_plot(dataframes, log_level, selected_messages, y_limit, target_values, file_names, start_time, end_time)
 
-        if st.button('Export Graph'):
-            img_bytes = fig_to_bytes(combined_fig)
-            st.download_button(label='Download Graph', data=img_bytes, file_name='plot.png', mime='image/png')
-
+    if st.button('Export Graph'):
+        img_bytes = fig_to_bytes(combined_fig)
+        st.download_button(label='Download Graph', data=img_bytes, file_name='plot.png', mime='image/png')
     else:
         st.write("Upload log files to display data.")
 
 if __name__ == '__main__':
     main()
+
+st.markdown("""
+    <div class="content">
+        <p>&copy; 2024 By Patharanan P. | For Seagate Korat.</p>
+    </div>
+""", unsafe_allow_html=True)
+
