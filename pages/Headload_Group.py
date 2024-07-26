@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import dask.dataframe as dd  # type: ignore
 import tempfile
 
-st.set_page_config(page_title='Easy Analysis Time Element', page_icon='img.png')
+st.set_page_config(page_title='Simple Time Element Analysis', page_icon='img.png')
 
 # ฟังก์ชั่นกรองข้อมูลและจัดกลุ่ม
 def filter_and_group_data(df, active_process_name, state_target_pairs, time_threshold):
@@ -25,7 +25,7 @@ def main():
     if 'history' not in st.session_state:
         st.session_state.history = []
 
-    uploaded_file = st.file_uploader('Upload a large log file', type='csv')
+    uploaded_file = st.file_uploader('Upload a large CSV file', type='csv')
     time_threshold = st.number_input('Enter maximum Diff or period of time threshold', min_value=1, value=3000)
 
     # ฟังก์ชันคำนวณค่าเฉลี่ย
@@ -142,88 +142,61 @@ def main():
             # แสดงตารางข้อมูล
             st.subheader('Place HGA Data')
             st.dataframe(place_hga_df)
-            st.write("Average time for each pair in Place HGA:")
+
+            st.markdown(f"<p style='font-size:18px; color:blue; font-weight:bold;'>Average time for each pair in Place HGA:</p>", unsafe_allow_html=True)
             for pair, avg in place_hga_avg.items():
-                st.write(f"{pair}: {avg}")
-            st.subheader('Total Average Time for Each Group')
-            st.write("Total average time for Place HGA:", round(sum(place_hga_avg.values()), 2))
+                st.markdown(f"- {pair}: <span style='color: red;'>{avg} ms</span>", unsafe_allow_html=True)
+         
+            st.markdown(f"<p style='font-size:24px; color:blue; font-weight:bold;'>Total average time for Place HGA : {round(sum(place_hga_avg.values()), 2)} ms</p>", unsafe_allow_html=True)
 
             st.subheader('Pick HGA Data')
             st.dataframe(pick_hga_df)
-            st.write("Average time for each pair in Pick HGA:")
+        
+            
+            st.markdown(f"<p style='font-size:18px; color:blue; font-weight:bold;'>Average time for each pair in Pick HGA:</p>", unsafe_allow_html=True)
             for pair, avg in pick_hga_avg.items():
-                st.write(f"{pair}: {avg}")
-            st.subheader('Total Average Time for Each Group')
-            st.write("Total average time for Pick HGA:", round(sum(pick_hga_avg.values()), 2))
+                st.markdown(f"- {pair}: <span style='color: red;'>{avg} ms</span>", unsafe_allow_html=True)
+            # st.markdown("**Total average time for Pick HGA:**")
+            st.markdown(f"<p style='font-size:24px; color:blue; font-weight:bold;'>Total average time for Pick HGA : {round(sum(pick_hga_avg.values()), 2)} ms</p>", unsafe_allow_html=True)
             
             st.subheader('Nest EE1 Data')
             st.dataframe(Nest_EE1_df)
-            st.write("Average time for each pair in Nest EE1:")
+       
+            
+            st.markdown(f"<p style='font-size:18px; color:blue; font-weight:bold;'>Average time for each pair in Nest EE1:</p>", unsafe_allow_html=True)
             for pair, avg in Nest_EE1_avg.items():
-                st.write(f"{pair}: {avg}")
-            st.subheader('Total Average Time for Each Group')
-            st.write("Total average time for Nest EE1:", round(sum(Nest_EE1_avg.values()), 2))
+                st.markdown(f"- {pair}: <span style='color: red;'>{avg} ms</span>", unsafe_allow_html=True)
+
+            # st.markdown("**Total average time for Nest EE1:**")
+            st.markdown(f"<p style='font-size:24px; color:blue; font-weight:bold;'>Total average time for Nest EE1 : {round(sum(Nest_EE1_avg.values()), 2)} ms</p>", unsafe_allow_html=True)
             
             st.subheader('Nest Rotate Data')
             st.dataframe(Nest_Rotate_df)
-            st.write("Average time for each pair in Nest Rotate:")
+   
+            st.markdown(f"<p style='font-size:18px; color:blue; font-weight:bold;'>Average time for each pair in Nest Rotate:</p>", unsafe_allow_html=True)
             for pair, avg in Nest_Rotate_avg.items():
-                st.write(f"{pair}: {avg}")
-            st.subheader('Total Average Time for Each Group')
-            st.write("Total average time for Nest Rotate:", round(sum(Nest_Rotate_avg.values()), 2))
+                st.markdown(f"- {pair}: <span style='color: red;'>{avg} ms</span>", unsafe_allow_html=True)
+            # st.markdown("**Total average time for Nest Rotate:**")
+            st.markdown(f"<p style='font-size:24px; color:blue; font-weight:bold;'>Total average time for Nest Rotate : {round(sum(Nest_Rotate_avg.values()), 2)} ms</p>", unsafe_allow_html=True)
             
             st.subheader('EE2 Data')
             st.dataframe(EE2_df)
-            st.write("Average time for each pair in EE2:")
+            st.markdown(f"<p style='font-size:18px; color:blue; font-weight:bold;'>Average time for each pair in EE2:</p>", unsafe_allow_html=True)
             for pair, avg in EE2_avg.items():
-                st.write(f"{pair}: {avg}")
-            st.subheader('Total Average Time for Each Group')
-            st.write("Total average time for EE2:", round(sum(EE2_avg.values()), 2))
-
-            # เพิ่มข้อมูลที่ประมวลผลลงใน history
-            history_entry = {
-                'file_name': uploaded_file.name,
-                'place_hga_avg': place_hga_avg,
-                'pick_hga_avg': pick_hga_avg,
-                'Nest_EE1_avg': Nest_EE1_avg,
-                'Nest_Rotate_avg': Nest_Rotate_avg,
-                'EE2_avg': EE2_avg
-            }
-            st.session_state.history.append(history_entry)
-
-            # จำกัดจำนวน history ไว้ที่ 5
-            if len(st.session_state.history) > 5:
-                st.session_state.history.pop(0)
-
-    # แสดง history
-    if st.session_state.history:
-        st.sidebar.title("History")
-        for i, entry in enumerate(st.session_state.history):
-            with st.sidebar.expander(f"History {i+1}: {entry['file_name']}"):
-                st.write("Average time for Place HGA:")
-                for pair, avg in entry['place_hga_avg'].items():
-                    st.write(f"{pair}: {avg}")
-                st.write("Total average time for Place HGA:", round(sum(entry['place_hga_avg'].values()), 2))
-
-                st.write("Average time for Pick HGA:")
-                for pair, avg in entry['pick_hga_avg'].items():
-                    st.write(f"{pair}: {avg}")
-                st.write("Total average time for Pick HGA:", round(sum(entry['pick_hga_avg'].values()), 2))
-
-                st.write("Average time for Nest EE1:")
-                for pair, avg in entry['Nest_EE1_avg'].items():
-                    st.write(f"{pair}: {avg}")
-                st.write("Total average time for Nest EE1:", round(sum(entry['Nest_EE1_avg'].values()), 2))
-
-                st.write("Average time for Nest Rotate:")
-                for pair, avg in entry['Nest_Rotate_avg'].items():
-                    st.write(f"{pair}: {avg}")
-                st.write("Total average time for Nest Rotate:", round(sum(entry['Nest_Rotate_avg'].values()), 2))
-
-                st.write("Average time for EE2:")
-                for pair, avg in entry['EE2_avg'].items():
-                    st.write(f"{pair}: {avg}")
-                st.write("Total average time for EE2:", round(sum(entry['EE2_avg'].values()), 2))
+                st.markdown(f"- {pair}: <span style='color: red;'>{avg} ms</span>", unsafe_allow_html=True)
+           
+            st.markdown(f"<p style='font-size:24px; color:blue; font-weight:bold;'>Total average time for EE2 : {round(sum(EE2_avg.values()), 2)} ms</p>", unsafe_allow_html=True)
 
 if __name__ == '__main__':
     main()
+
+st.markdown("""
+
+    <div class="content">
+    <p>       </p>
+        <p>
+            &copy; 2024 By Patharanan P. | For Seagate Korat.
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
