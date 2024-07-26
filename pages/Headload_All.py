@@ -6,7 +6,7 @@ import dask.dataframe as dd  # type: ignore
 import tempfile
 import os
 
-st.set_page_config(page_title='Easy Analysis Time Element', page_icon='img.png')
+st.set_page_config(page_title='Simple Time Element Analysis', page_icon='img.png')
 
 # ฟังก์ชันวิเคราะห์ DataFrame และคืนค่าผลลัพธ์ที่กรองแล้ว
 def analyze_headload(df, active_process_name, state_names):
@@ -29,7 +29,7 @@ def process_large_logfile(file_path):
 def main():
     st.title("Analysis 📊")
 
-    uploaded_file = st.file_uploader('Upload a large log file', type='csv')
+    uploaded_file = st.file_uploader('Upload a large CSV file', type='csv')
 
     if uploaded_file:
         st.text(uploaded_file.name)
@@ -95,7 +95,21 @@ def main():
         os.remove(temp_file_path)
 
     else:
-        st.write("No data available. Please upload log files in the Analysis page.")
+        st.write("No data available. Please upload log files in this page.")
+
+
 
 if __name__ == '__main__':
     main()
+
+st.markdown("""
+
+    <div class="content">
+    <p>       </p>
+        <p>
+            &copy; 2024 By Patharanan P. | For Seagate Korat.
+        </p>
+    </div>
+""", unsafe_allow_html=True)
+
+
