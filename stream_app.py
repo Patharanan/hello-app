@@ -107,7 +107,6 @@ st.markdown("""
                     <li>Use the slider menu to configure the `timediff(ms)` sets a value that does not exceed the calculation to eliminate errors. The resulting graph is displayed on the right side of the screen.</li>
             </ol>
         </p>
-      
         <h3>Data Page</h3>
         <p class="indent">
             It is a page linked to the Normal page. It displays information about 
